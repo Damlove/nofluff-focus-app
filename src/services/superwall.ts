@@ -23,7 +23,7 @@ class SuperwallService {
       this.config = config;
 
       // Initialize Superwall
-      await Superwall.configure(config.apiKey);
+      await (Superwall as any).configure({ apiKey: config.apiKey });
 
       // Set up event listeners
       this.setupEventListeners();
@@ -39,51 +39,51 @@ class SuperwallService {
 
   private setupEventListeners(): void {
     // Handle paywall presentation
-    Superwall.on('paywallWillPresent', (paywallInfo) => {
+    (Superwall as any).on('paywallWillPresent', (paywallInfo: any) => {
       console.log('Paywall will present:', paywallInfo);
     });
 
-    Superwall.on('paywallDidPresent', (paywallInfo) => {
+    (Superwall as any).on('paywallDidPresent', (paywallInfo: any) => {
       console.log('Paywall did present:', paywallInfo);
     });
 
-    Superwall.on('paywallWillDismiss', (paywallInfo) => {
+    (Superwall as any).on('paywallWillDismiss', (paywallInfo: any) => {
       console.log('Paywall will dismiss:', paywallInfo);
     });
 
-    Superwall.on('paywallDidDismiss', (paywallInfo) => {
+    (Superwall as any).on('paywallDidDismiss', (paywallInfo: any) => {
       console.log('Paywall did dismiss:', paywallInfo);
     });
 
     // Handle purchase events
-    Superwall.on('subscriptionStatusDidChange', (newValue) => {
+    (Superwall as any).on('subscriptionStatusDidChange', (newValue: any) => {
       console.log('Subscription status changed:', newValue);
     });
 
-    Superwall.on('transactionAbandon', (transactionInfo) => {
+    (Superwall as any).on('transactionAbandon', (transactionInfo: any) => {
       console.log('Transaction abandoned:', transactionInfo);
     });
 
-    Superwall.on('transactionComplete', (transactionInfo) => {
+    (Superwall as any).on('transactionComplete', (transactionInfo: any) => {
       console.log('Transaction completed:', transactionInfo);
     });
 
-    Superwall.on('transactionFail', (error) => {
+    (Superwall as any).on('transactionFail', (error: any) => {
       console.log('Transaction failed:', error);
     });
 
-    Superwall.on('transactionRestore', (transactionInfo) => {
+    (Superwall as any).on('transactionRestore', (transactionInfo: any) => {
       console.log('Transaction restored:', transactionInfo);
     });
 
-    Superwall.on('transactionStart', (product) => {
+    (Superwall as any).on('transactionStart', (product: any) => {
       console.log('Transaction started:', product);
     });
   }
 
   async identify(userId: string, attributes?: Record<string, any>): Promise<boolean> {
     try {
-      await Superwall.identify(userId, attributes);
+      await (Superwall as any).identify(userId, attributes);
       console.log('Superwall user identified:', userId);
       return true;
     } catch (error) {
@@ -94,7 +94,7 @@ class SuperwallService {
 
   async reset(): Promise<boolean> {
     try {
-      await Superwall.reset();
+      await (Superwall as any).reset();
       console.log('Superwall reset successfully');
       return true;
     } catch (error) {
@@ -105,7 +105,7 @@ class SuperwallService {
 
   async setUserAttributes(attributes: Record<string, any>): Promise<boolean> {
     try {
-      await Superwall.setUserAttributes(attributes);
+      await (Superwall as any).setUserAttributes(attributes);
       console.log('Superwall user attributes set:', attributes);
       return true;
     } catch (error) {
@@ -116,7 +116,7 @@ class SuperwallService {
 
   async track(event: string, properties?: Record<string, any>): Promise<boolean> {
     try {
-      await Superwall.track(event, properties);
+      await (Superwall as any).track(event, properties);
       console.log('Superwall event tracked:', event, properties);
       return true;
     } catch (error) {
@@ -127,7 +127,7 @@ class SuperwallService {
 
   async presentPaywall(event: string, properties?: Record<string, any>): Promise<boolean> {
     try {
-      await Superwall.register(event, properties);
+      await (Superwall as any).register(event, properties);
       console.log('Superwall paywall presented for event:', event);
       return true;
     } catch (error) {
@@ -138,7 +138,7 @@ class SuperwallService {
 
   async getSubscriptionStatus(): Promise<any> {
     try {
-      const status = await Superwall.getSubscriptionStatus();
+      const status = await (Superwall as any).getSubscriptionStatus();
       console.log('Superwall subscription status:', status);
       return status;
     } catch (error) {
@@ -149,7 +149,7 @@ class SuperwallService {
 
   async restorePurchases(): Promise<boolean> {
     try {
-      await Superwall.restorePurchases();
+      await (Superwall as any).restorePurchases();
       console.log('Superwall purchases restored');
       return true;
     } catch (error) {
@@ -161,7 +161,7 @@ class SuperwallService {
   // Feature gating methods
   async isFeatureAvailable(feature: string): Promise<boolean> {
     try {
-      const status = await Superwall.getSubscriptionStatus();
+      const status = await (Superwall as any).getSubscriptionStatus();
       // This would check if the user has access to the feature
       // based on their subscription status
       return status === 'ACTIVE';

@@ -62,7 +62,7 @@ class ScreenTimeAPIImplementation implements ScreenTimeAPI {
       { bundleId: 'com.tiktok', name: 'TikTok', category: 'Entertainment', usageTime: 2400 },
       { bundleId: 'com.youtube.ios', name: 'YouTube', category: 'Entertainment', usageTime: 3000 },
       { bundleId: 'com.netflix.Netflix', name: 'Netflix', category: 'Entertainment', usageTime: 1500 },
-      { bundleId: 'com.reddit.Reddit', name: 'Reddit', category: 'Social', category: 'Social', usageTime: 900 },
+      { bundleId: 'com.reddit.Reddit', name: 'Reddit', category: 'Social', usageTime: 900 },
       { bundleId: 'com.snapchat.snapchat', name: 'Snapchat', category: 'Social', usageTime: 600 },
       { bundleId: 'com.whatsapp.WhatsApp', name: 'WhatsApp', category: 'Communication', usageTime: 1800 },
       { bundleId: 'com.discord', name: 'Discord', category: 'Communication', usageTime: 1200 },
