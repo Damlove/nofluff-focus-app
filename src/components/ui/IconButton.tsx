@@ -34,7 +34,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
     style,
   ];
 
-  const iconSize = variant === 'small' ? size * 0.8 : size;
+  const iconSize = size;
 
   return (
     <TouchableOpacity

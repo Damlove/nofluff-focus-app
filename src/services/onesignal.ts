@@ -3,6 +3,23 @@ import OneSignal from 'react-native-onesignal';
 import { supabase } from './supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+// OneSignal v5 types
+type NotificationClickEvent = {
+  notification: {
+    additionalData?: any;
+  };
+};
+
+type NotificationForegroundEvent = {
+  notification: any;
+};
+
+type PermissionChangeEvent = {
+  hasPrompted: boolean;
+  provisional: boolean;
+  status: number;
+};
+
 export interface OneSignalConfig {
   appId: string;
   apiKey?: string;
@@ -25,8 +42,8 @@ class OneSignalService {
       this.setupEventListeners();
 
       // Get the player ID
-      const deviceState = await OneSignal.getDeviceState();
-      this.playerId = deviceState?.userId || null;
+      const deviceState = await OneSignal.User.getOnesignalId();
+      this.playerId = deviceState || null;
 
       this.isInitialized = true;
       console.log('OneSignal initialized successfully');
@@ -39,24 +56,24 @@ class OneSignalService {
 
   private setupEventListeners(): void {
     // Handle notification received
-    OneSignal.Notifications.addEventListener('click', (event) => {
+    OneSignal.Notifications.addEventListener('click', (event: NotificationClickEvent) => {
       console.log('OneSignal notification clicked:', event);
       this.handleNotificationClick(event);
     });
 
     // Handle notification received while app is in foreground
-    OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event) => {
+    OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event: NotificationForegroundEvent) => {
       console.log('OneSignal notification received in foreground:', event);
       // You can customize the notification display here
     });
 
     // Handle permission changes
-    OneSignal.Notifications.addEventListener('permissionChanged', (permission) => {
+    OneSignal.Notifications.addEventListener('permissionChanged', (permission: PermissionChangeEvent) => {
       console.log('OneSignal permission changed:', permission);
     });
   }
 
-  private handleNotificationClick(event: any): void {
+  private handleNotificationClick(event: NotificationClickEvent): void {
     // Handle notification click based on the notification data
     const data = event.notification.additionalData;
     
@@ -88,8 +105,8 @@ class OneSignalService {
         return this.playerId;
       }
 
-      const deviceState = await OneSignal.getDeviceState();
-      this.playerId = deviceState?.userId || null;
+      const deviceState = await OneSignal.User.getOnesignalId();
+      this.playerId = deviceState || null;
       return this.playerId;
     } catch (error) {
       console.error('Failed to get OneSignal player ID:', error);
