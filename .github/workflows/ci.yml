@@ -46,7 +46,7 @@ jobs:
         run: npm ci
       
       - name: Setup EAS CLI
-        if: ${{ env.EXPO_TOKEN != '' }}
+        if: env.EXPO_TOKEN != ''
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
