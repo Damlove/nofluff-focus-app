@@ -1,235 +1,82 @@
 import { Platform } from 'react-native';
-import OneSignal from 'react-native-onesignal';
+import { OneSignal } from 'react-native-onesignal';
 import { supabase } from './supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
-export interface OneSignalConfig {
-  appId: string;
-  apiKey?: string;
-}
-
-class OneSignalService {
-  private isInitialized: boolean = false;
-  private playerId: string | null = null;
-
-  async initialize(config: OneSignalConfig): Promise<boolean> {
-    try {
-      if (this.isInitialized) {
-        return true;
-      }
-
-      // Initialize OneSignal - using type assertion to bypass TypeScript issues
-      (OneSignal as any).initialize(config.appId);
-
-      // Set up event listeners
-      this.setupEventListeners();
-
-      // Get the player ID
-      const deviceState = await (OneSignal as any).User.getOnesignalId();
-      this.playerId = deviceState || null;
-
-      this.isInitialized = true;
-      console.log('OneSignal initialized successfully');
-      return true;
-    } catch (error) {
-      console.error('Failed to initialize OneSignal:', error);
-      return false;
-    }
+/**
+ * Initializes the OneSignal SDK with your App ID.
+ * This should be called once when the app starts.
+ */
+export const initializeOneSignal = () => {
+  const oneSignalAppId = process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID;
+  if (!oneSignalAppId) {
+    console.error("CRITICAL: OneSignal App ID is not configured in .env file.");
+    return;
   }
+  
+  // This is the correct v4 method.
+  OneSignal.initialize(oneSignalAppId);
+  
+  // This is the correct v4 method for requesting permission.
+  OneSignal.Notifications.requestPermission(true);
+};
 
-  private setupEventListeners(): void {
-    // Handle notification received
-    (OneSignal as any).Notifications.addEventListener('click', (event: any) => {
-      console.log('OneSignal notification clicked:', event);
-      this.handleNotificationClick(event);
-    });
+/**
+ * Associates the OneSignal device with your Supabase user ID.
+ * @param userId The user's unique ID from Supabase Auth.
+ */
+export const loginToOneSignal = async (userId: string) => {
+  if (!userId) return;
 
-    // Handle notification received while app is in foreground
-    (OneSignal as any).Notifications.addEventListener('foregroundWillDisplay', (event: any) => {
-      console.log('OneSignal notification received in foreground:', event);
-      // You can customize the notification display here
-    });
+  try {
+    // This is the correct v4 method for setting the external user ID.
+    OneSignal.login(userId);
+    console.log(`OneSignal user logged in with ID: ${userId}`);
 
-    // Handle permission changes - Note: permissionChanged event doesn't exist in v5.x
-    // You can use pushSubscription.addEventListener('change') instead if needed
-  }
+    // This is the correct v4 method for getting the player ID.
+    const playerId = OneSignal.User.pushSubscription.getPushSubscriptionId();
 
-  private handleNotificationClick(event: any): void {
-    // Handle notification click based on the notification data
-    const data = event.notification?.additionalData;
-    
-    if (data?.type === 'focus_reminder') {
-      // Navigate to focus session
-      console.log('Focus reminder clicked');
-    } else if (data?.type === 'milestone_achieved') {
-      // Navigate to milestone celebration
-      console.log('Milestone notification clicked');
-    } else if (data?.type === 'session_failed') {
-      // Navigate to failure log
-      console.log('Session failure notification clicked');
-    }
-  }
-
-  async requestPermission(): Promise<boolean> {
-    try {
-      const permission = await (OneSignal as any).Notifications.requestPermission(true);
-      return permission;
-    } catch (error) {
-      console.error('Failed to request OneSignal permission:', error);
-      return false;
-    }
-  }
-
-  async getPlayerId(): Promise<string | null> {
-    try {
-      if (this.playerId) {
-        return this.playerId;
-      }
-
-      const deviceState = await (OneSignal as any).User.getOnesignalId();
-      this.playerId = deviceState || null;
-      return this.playerId;
-    } catch (error) {
-      console.error('Failed to get OneSignal player ID:', error);
-      return null;
-    }
-  }
-
-  async storePlayerIdToDatabase(userId: string): Promise<boolean> {
-    try {
-      const playerId = await this.getPlayerId();
-      if (!playerId) {
-        console.error('No OneSignal player ID available');
-        return false;
-      }
-
+    if (playerId) {
       const { error } = await supabase
         .from('devices')
         .upsert({
           user_id: userId,
           device_id: playerId,
-          platform: Platform.OS as 'ios' | 'android' | 'web',
+          platform: Platform.OS as 'ios' | 'android',
           onesignal_player_id: playerId,
           is_active: true,
           last_seen_at: new Date().toISOString(),
         });
-
-      if (error) {
-        console.error('Failed to store OneSignal player ID:', error);
-        return false;
-      }
-
-      console.log('OneSignal player ID stored successfully');
-      return true;
-    } catch (error) {
-      console.error('Failed to store OneSignal player ID:', error);
-      return false;
+      
+      if (error) throw error;
+      console.log("Successfully saved OneSignal Player ID to Supabase.");
     }
+  } catch (e) {
+    console.error("Error logging in to OneSignal:", e);
   }
+};
 
-  async sendTag(key: string, value: string): Promise<boolean> {
-    try {
-      (OneSignal as any).User.addTag(key, value);
-      return true;
-    } catch (error) {
-      console.error('Failed to send OneSignal tag:', error);
-      return false;
-    }
+/**
+ * Disassociates the device from the Supabase user ID upon logout.
+ */
+export const logoutFromOneSignal = async () => {
+  try {
+    // This is the correct v4 method.
+    OneSignal.logout();
+    console.log("OneSignal user logged out.");
+  } catch (e) {
+    console.error("Error logging out from OneSignal:", e);
   }
+};
 
-  async removeTag(key: string): Promise<boolean> {
-    try {
-      (OneSignal as any).User.removeTag(key);
-      return true;
-    } catch (error) {
-      console.error('Failed to remove OneSignal tag:', error);
-      return false;
-    }
+/**
+ * Send a tag to OneSignal for user segmentation.
+ */
+export const sendTagToOneSignal = (key: string, value: string) => {
+  try {
+    // This is the correct v4 method.
+    OneSignal.User.addTag(key, value);
+    console.log(`OneSignal tag sent: ${key} = ${value}`);
+  } catch (e) {
+    console.error("Error sending tag to OneSignal:", e);
   }
-
-  async setExternalUserId(userId: string): Promise<boolean> {
-    try {
-      (OneSignal as any).login(userId);
-      return true;
-    } catch (error) {
-      console.error('Failed to set OneSignal external user ID:', error);
-      return false;
-    }
-  }
-
-  async logout(): Promise<boolean> {
-    try {
-      (OneSignal as any).logout();
-      return true;
-    } catch (error) {
-      console.error('Failed to logout from OneSignal:', error);
-      return false;
-    }
-  }
-
-  // Notification scheduling methods
-  async scheduleLocalNotification(
-    title: string,
-    body: string,
-    scheduledTime: Date,
-    data?: any
-  ): Promise<boolean> {
-    try {
-      // OneSignal doesn't have direct local notification scheduling
-      // This would typically be handled by the backend or edge functions
-      console.log('Scheduling local notification:', { title, body, scheduledTime, data });
-      return true;
-    } catch (error) {
-      console.error('Failed to schedule local notification:', error);
-      return false;
-    }
-  }
-
-  async cancelScheduledNotification(notificationId: string): Promise<boolean> {
-    try {
-      // OneSignal doesn't have direct local notification cancellation
-      console.log('Canceling scheduled notification:', notificationId);
-      return true;
-    } catch (error) {
-      console.error('Failed to cancel scheduled notification:', error);
-      return false;
-    }
-  }
-}
-
-// Export singleton instance
-export const oneSignalService = new OneSignalService();
-
-// Hook for using OneSignal in React components
-export const useOneSignal = () => {
-  const { user } = useAuth();
-
-  const initializeOneSignal = async (config: OneSignalConfig) => {
-    const success = await oneSignalService.initialize(config);
-    if (success && user) {
-      await oneSignalService.setExternalUserId(user.id);
-      await oneSignalService.storePlayerIdToDatabase(user.id);
-    }
-    return success;
-  };
-
-  const requestPermission = async () => {
-    return await oneSignalService.requestPermission();
-  };
-
-  const sendTag = async (key: string, value: string) => {
-    return await oneSignalService.sendTag(key, value);
-  };
-
-  const removeTag = async (key: string) => {
-    return await oneSignalService.removeTag(key);
-  };
-
-  return {
-    initializeOneSignal,
-    requestPermission,
-    sendTag,
-    removeTag,
-    getPlayerId: oneSignalService.getPlayerId.bind(oneSignalService),
-  };
 };

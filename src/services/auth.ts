@@ -1,16 +1,15 @@
-// src/services/auth.ts
+// Located at: src/services/auth.ts
 
-import { supabase } from './supabase/client';
+import { supabase } from '@/services/supabase/client';
 
-interface AuthCredentials {
-  email: string;
-  password: string;
-}
+// This is the robust way to get the type for credentials.
+// It asks TypeScript: "What is the type of the first argument of the signUp function?"
+type Credentials = Parameters<typeof supabase.auth.signUp>[0];
 
 /**
  * Sign up a new user with email and password.
  */
-export const signUpWithEmail = async (credentials: AuthCredentials) => {
+export const signUpWithEmail = async (credentials: Credentials) => {
   const { data, error } = await supabase.auth.signUp(credentials);
   return { data, error };
 };
@@ -18,7 +17,7 @@ export const signUpWithEmail = async (credentials: AuthCredentials) => {
 /**
  * Sign in an existing user with email and password.
  */
-export const signInWithEmail = async (credentials: AuthCredentials) => {
+export const signInWithEmail = async (credentials: Credentials) => {
   const { data, error } = await supabase.auth.signInWithPassword(credentials);
   return { data, error };
 };
@@ -29,20 +28,4 @@ export const signInWithEmail = async (credentials: AuthCredentials) => {
 export const signOut = async () => {
   const { error } = await supabase.auth.signOut();
   return { error };
-};
-
-/**
- * Get the current session.
- */
-export const getCurrentSession = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  return { data, error };
-};
-
-/**
- * Get the current user.
- */
-export const getCurrentUser = async () => {
-  const { data, error } = await supabase.auth.getUser();
-  return { data, error };
 };
